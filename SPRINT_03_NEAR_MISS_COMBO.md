@@ -45,3 +45,10 @@
 - Exécuter le tutoriel: `SPRINT_03_TEST_PHYSIQUE_TUTORIEL.md`.
 - Me renvoyer les résultats des scénarios A/B/C/D/E sur low/mid/high.
 - Tant que cette validation n'est pas reçue, Sprint 3 reste **En cours**.
+
+
+## 6) Hotfix P0 avant test physique
+
+- Problème identifié: crash au boot menu (intro) dû à un import manquant `preloadAsset` après refactor navigation.
+- Correctif appliqué: réintégration de `preloadAsset` dans `mainmenu.js` et `garage.js`.
+- Statut: **corrigé** côté code, en attente de revalidation appareil réel.

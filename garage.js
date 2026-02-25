@@ -1,5 +1,5 @@
 import { initPagePerf, markNavigationStart, reportNavigationArrival, runExitTransition } from "./perf-tools.js";
-import { navigateWithPreload as sharedNavigateWithPreload } from "./src/core/navigation.js";
+import { navigateWithPreload as sharedNavigateWithPreload, preloadAsset } from "./src/core/navigation.js";
 const vehicles = [
   {
     id: "PORSHE",
