@@ -1,4 +1,5 @@
 import { initPagePerf, markNavigationStart, reportNavigationArrival, runExitTransition } from "./perf-tools.js";
+import { navigateWithPreload as sharedNavigateWithPreload } from "./src/core/navigation.js";
 const overlay = document.getElementById("overlay");
 const popups = {
   settingsPopup: document.getElementById("settingsPopup"),
@@ -519,47 +520,17 @@ function markIntroSeenThisSession() {
   sessionStorage.setItem(INTRO_SEEN_SESSION_KEY, "1");
 }
 
-function preloadAsset(src, onProgress) {
-  return new Promise((resolve) => {
-    if (src.endsWith(".mp3") || src.endsWith(".mp4")) {
-      const media = document.createElement(src.endsWith(".mp4") ? "video" : "audio");
-      media.preload = "auto";
-      media.src = src;
-      const done = () => {
-        onProgress();
-        resolve();
-      };
-      media.addEventListener("loadeddata", done, { once: true });
-      media.addEventListener("error", done, { once: true });
-      return;
-    }
-
-    const img = new Image();
-    const done = () => {
-      onProgress();
-      resolve();
-    };
-    img.onload = done;
-    img.onerror = done;
-    img.src = src;
-  });
-}
-
 
 async function navigateWithPreload(targetHref, assets = []) {
-  let loadingShown = false;
-  const loadingTimer = window.setTimeout(() => {
-    navLoading?.classList.remove("hidden");
-    loadingShown = true;
-  }, 220);
-
-  await runExitTransition({ appRoot, navLoading: null });
-  markNavigationStart(PAGE_NAME, targetHref);
-  await Promise.all(assets.map((src) => preloadAsset(src, () => {})));
-
-  window.clearTimeout(loadingTimer);
-  if (!loadingShown) navLoading?.classList.add("hidden");
-  window.location.href = targetHref;
+  return sharedNavigateWithPreload({
+    targetHref,
+    assets,
+    appRoot,
+    navLoading,
+    runExitTransition,
+    markNavigationStart,
+    pageName: PAGE_NAME,
+  });
 }
 
 async function checkIntroAssetAvailability() {
