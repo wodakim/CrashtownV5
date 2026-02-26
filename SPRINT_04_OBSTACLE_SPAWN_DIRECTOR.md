@@ -22,6 +22,7 @@
 - [x] Spawn director v2 ajouté (`pickSpawnLaneV2`) en tenant compte trafic + obstacles + lane joueur.
 - [x] Intégration gameplay dans boucle principale (`updateObstacles`, spawn clock dédiée).
 - [x] Tracking télémétrie obstacle (`obstacle_spawn`, `obstacle_hit`).
+- [x] Bots détruits en collision obstacle (`obstacle_bot_hit`) pour cohérence gameplay.
 - [ ] Validation gameplay manuelle approfondie (fairness/ressenti) sur appareils réels.
 - [ ] Asset obstacle présent dans le bundle Android (`public/Assets/Road/obstacles/Obstacles_decor_base_v01.svg`).
 
@@ -39,4 +40,4 @@
 
 - **Cause probable du rectangle orange:** asset obstacle absent du repo/bundle actuel.
 - **Mitigation code:** fallback multi-chemins + event telemetry `obstacle_asset_missing`.
-- **Action MANUELLE (toi):** ajouter le PNG au chemin cible dans le repo pour supprimer le fallback.
+- **Action MANUELLE (toi):** ajouter le SVG au chemin cible dans le repo pour supprimer le fallback.

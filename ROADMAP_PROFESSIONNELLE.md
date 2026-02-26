@@ -312,3 +312,13 @@ Une feature est considérée "done" seulement si:
 - **Motif:** coller visuellement aux arêtes de l'asset obstacle sur tous les écrans.
 - **Ajout intéressant (S4.2):** fallback multi-chemins + telemetry `obstacle_asset_missing`.
 - **Motif:** diagnostiquer rapidement les assets manquants sur APK/device.
+
+- **Ajout intéressant (S4.3):** bots détruits s'ils entrent en collision avec un obstacle de voie.
+- **Motif:** cohérence systémique (même règle de danger pour joueur et IA) et lecture gameplay plus crédible.
+- **Ajout intéressant (S4.4):** suppression de l'ombre portée des obstacles en course.
+- **Motif:** lisibilité visuelle plus propre sur écrans mobiles et meilleure cohérence artistique de la route.
+
+### Règle opératoire de suivi (confirmée)
+- À chaque message, vérifier le bloc `Suivi d'exécution (strict, ordre roadmap)` avant de proposer la prochaine action.
+- Exécuter strictement l'ordre des sprints (pas de saut de Sprint).
+- Signaler explicitement ce qui est **fait**, **en cours**, et **MANUEL (toi)**.
