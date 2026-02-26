@@ -263,10 +263,10 @@ document.getElementById("startRaceBtn").addEventListener("click", async () => {
   navigateWithPreload("play.html", [
     qualityImage,
     "./Assets/Road/Road_street_baseloop_v01.png",
-    "/Assets/Road/obstacles/Obstacles_decor_base_v01.png",
-    "/Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
-    "./Assets/Road/obstacles/Obstacles_decor_base_v01.png",
-    "./Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
+    "/Assets/Road/obstacles/Obstacles_decor_base_v01.svg",
+    "/Assets/Road/Obstacles/Obstacles_decor_base_v01.svg",
+    "./Assets/Road/obstacles/Obstacles_decor_base_v01.svg",
+    "./Assets/Road/Obstacles/Obstacles_decor_base_v01.svg",
     "./Assets/Sounds/Onroad/radio/Sound_music_onroad_playsong1_sample_v01.mp3",
   ]);
 });

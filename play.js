@@ -39,10 +39,10 @@ const RADIO_TRACK_PREF_KEY = "radio_track_idx_v1";
 const OBSTACLE_SPAWN_INTERVAL_MS = gameplayConfig.obstacle.spawnIntervalMs;
 const MAX_ACTIVE_OBSTACLES = gameplayConfig.obstacle.maxActive;
 const OBSTACLE_ASSET_CANDIDATES = [
-  "/Assets/Road/obstacles/Obstacles_decor_base_v01.png",
-  "/Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
-  "./Assets/Road/obstacles/Obstacles_decor_base_v01.png",
-  "./Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
+  "/Assets/Road/obstacles/Obstacles_decor_base_v01.svg",
+  "/Assets/Road/Obstacles/Obstacles_decor_base_v01.svg",
+  "./Assets/Road/obstacles/Obstacles_decor_base_v01.svg",
+  "./Assets/Road/Obstacles/Obstacles_decor_base_v01.svg",
 ];
 
 const PAGE_NAME = "play.html";

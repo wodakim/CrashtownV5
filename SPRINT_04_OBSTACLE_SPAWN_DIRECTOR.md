@@ -17,13 +17,13 @@
 ## 2) Avancement itération 1
 
 - [x] Obstacles de voie ajoutés (spawn, update, collision, expiration).
-- [x] Obstacle visuel migré vers asset PNG `Obstacles_decor_base_v01.png` (même empreinte visuelle que prototype).
+- [x] Obstacle visuel migré vers asset SVG `Obstacles_decor_base_v01.svg` (même empreinte visuelle que prototype).
 - [x] Hitbox obstacle alignée sur les arêtes du sprite rendu (collision via `getBoundingClientRect`).
 - [x] Spawn director v2 ajouté (`pickSpawnLaneV2`) en tenant compte trafic + obstacles + lane joueur.
 - [x] Intégration gameplay dans boucle principale (`updateObstacles`, spawn clock dédiée).
 - [x] Tracking télémétrie obstacle (`obstacle_spawn`, `obstacle_hit`).
 - [ ] Validation gameplay manuelle approfondie (fairness/ressenti) sur appareils réels.
-- [ ] Asset obstacle présent dans le bundle Android (`public/Assets/Road/obstacles/Obstacles_decor_base_v01.png`).
+- [ ] Asset obstacle présent dans le bundle Android (`public/Assets/Road/obstacles/Obstacles_decor_base_v01.svg`).
 
 ---
 
