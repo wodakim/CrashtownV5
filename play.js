@@ -1,33 +1,49 @@
 import { createFrameBudgetTracker, initPagePerf, reportNavigationArrival, runExitTransition } from "./perf-tools.js";
-const lanes = [0.27, 0.43, 0.59, 0.75];
-const ENEMY_SPAWN_INTERVAL_MS = 980;
-const MAX_ENEMIES = 6;
-const BOT_BASE_SPEED = 0.18;
-const BOT_MAX_SPEED = 0.45;
-const BOT_MIN_SPEED = 0.12;
-const BOT_SAFE_GAP = 0.12;
-const BOT_PLAYER_SPEED_MARGIN = 0.03;
-const PLAYER_HITBOX_HALF_WIDTH = 0.046;
-const BOT_HITBOX_HALF_WIDTH = 0.046;
+import { isFeatureEnabled } from "./src/core/featureFlags.js";
+import { ensureStorageVersion, readNumber, writeNumber } from "./src/core/storage.js";
+import { trackEvent } from "./src/core/telemetry.js";
+import { gameplayConfig } from "./src/data/gameplay.js";
+import { safePlay, stopAndReset } from "./src/core/audio.js";
+const lanes = gameplayConfig.lanes;
+const ENEMY_SPAWN_INTERVAL_MS = gameplayConfig.enemySpawnIntervalMs;
+const MAX_ENEMIES = gameplayConfig.maxEnemies;
+const BOT_BASE_SPEED = gameplayConfig.bot.baseSpeed;
+const BOT_MAX_SPEED = gameplayConfig.bot.maxSpeed;
+const BOT_MIN_SPEED = gameplayConfig.bot.minSpeed;
+const BOT_SAFE_GAP = gameplayConfig.bot.safeGap;
+const BOT_PLAYER_SPEED_MARGIN = gameplayConfig.bot.playerSpeedMargin;
+const PLAYER_HITBOX_HALF_WIDTH = gameplayConfig.player.hitboxHalfWidth;
+const BOT_HITBOX_HALF_WIDTH = gameplayConfig.player.hitboxHalfWidth;
 const FRONTAL_CONTACT_X_THRESHOLD = 0.032;
 const SIDE_TAKEDOWN_X_MIN = 0.036;
-const TAKEDOWN_STEER_WINDOW_MS = 520;
-const PLAYER_Y = 0.79;
-const HITBOX_FRONT_OFFSET = 0.048;
-const HITBOX_BACK_OFFSET = 0.05;
-const TAKEDOWN_OVERLAP_BUFFER = 0.006;
-const START_GRACE_MS = 2600;
-const LANE_CHANGE_COOLDOWN_MS = 120;
-const LANE_SHIELD_MS = 210;
-const BASE_DIFFICULTY_SCORE_STEP = 1800;
-const MIN_SPAWN_PROGRESS_GAP = 0.22;
-const MAX_RECENT_EVENTS = 12;
+const NEAR_MISS_X_MIN = 0.07;
+const NEAR_MISS_X_MAX = 0.19;
+const COMBO_WINDOW_MS = 3200;
+const TAKEDOWN_STEER_WINDOW_MS = gameplayConfig.takedown.steerWindowMs;
+const PLAYER_Y = gameplayConfig.player.y;
+const HITBOX_FRONT_OFFSET = gameplayConfig.player.hitboxFrontOffset;
+const HITBOX_BACK_OFFSET = gameplayConfig.player.hitboxBackOffset;
+const TAKEDOWN_OVERLAP_BUFFER = gameplayConfig.takedown.overlapBuffer;
+const START_GRACE_MS = gameplayConfig.player.startGraceMs;
+const LANE_CHANGE_COOLDOWN_MS = gameplayConfig.player.laneChangeCooldownMs;
+const LANE_SHIELD_MS = gameplayConfig.player.laneShieldMs;
+const BASE_DIFFICULTY_SCORE_STEP = gameplayConfig.race.baseDifficultyScoreStep;
+const MIN_SPAWN_PROGRESS_GAP = gameplayConfig.race.minSpawnProgressGap;
+const MAX_RECENT_EVENTS = gameplayConfig.race.maxRecentEvents;
 const DEV_HITBOX_QUERY = new URLSearchParams(window.location.search).get("devHitbox") === "1";
-const PLAYER_WALLET_KEY = "ct_wallet_credits_v1";
-const GIFT_REWARD_CREDITS = 50;
-const GIFT_SPAWN_MIN_MS = 120000;
-const GIFT_SPAWN_MAX_MS = 300000;
-const RADIO_TRACK_PREF_KEY = "ct_radio_track_idx_v1";
+const PLAYER_WALLET_KEY = "wallet_credits_v1";
+const GIFT_REWARD_CREDITS = gameplayConfig.gift.rewardCredits;
+const GIFT_SPAWN_MIN_MS = gameplayConfig.gift.spawnMinMs;
+const GIFT_SPAWN_MAX_MS = gameplayConfig.gift.spawnMaxMs;
+const RADIO_TRACK_PREF_KEY = "radio_track_idx_v1";
+const OBSTACLE_SPAWN_INTERVAL_MS = gameplayConfig.obstacle.spawnIntervalMs;
+const MAX_ACTIVE_OBSTACLES = gameplayConfig.obstacle.maxActive;
+const OBSTACLE_ASSET_CANDIDATES = [
+  "/Assets/Road/obstacles/Obstacles_decor_base_v01.png",
+  "/Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
+  "./Assets/Road/obstacles/Obstacles_decor_base_v01.png",
+  "./Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
+];
 
 const PAGE_NAME = "play.html";
 initPagePerf(PAGE_NAME);
@@ -148,11 +164,23 @@ const state = {
   giftDrops: [],
   giftSpawnClock: 0,
   giftSpawnTarget: GIFT_SPAWN_MIN_MS + Math.random() * (GIFT_SPAWN_MAX_MS - GIFT_SPAWN_MIN_MS),
+  obstacles: [],
+  obstacleSpawnClock: 0,
+  combo: {
+    count: 0,
+    multiplier: 1,
+    expiresAt: 0,
+    lastSource: null,
+  },
 };
 
 const feedbackLayer = document.createElement("div");
 feedbackLayer.className = "feedback-layer";
 playApp?.appendChild(feedbackLayer);
+
+const comboMeter = document.createElement("div");
+comboMeter.className = "combo-meter hidden";
+playApp?.appendChild(comboMeter);
 
 function selectedVehicleSrc() {
   const selected = localStorage.getItem("selectedVehicle") || "PORSHE";
@@ -163,34 +191,50 @@ function selectedVehicleSrc() {
 function playSfx(audio) {
   if (!audio) return;
   audio.currentTime = 0;
-  audio.play().catch(() => {});
+  safePlay(audio);
 }
 
 function award(points) {
   state.score += points;
 }
 function getWalletCredits() {
-  const raw = Number(localStorage.getItem(PLAYER_WALLET_KEY));
+  const raw = readNumber(PLAYER_WALLET_KEY, Number.NaN);
   if (Number.isFinite(raw) && raw >= 0) return Math.floor(raw);
-  localStorage.setItem(PLAYER_WALLET_KEY, "2500");
+  writeNumber(PLAYER_WALLET_KEY, 2500);
   return 2500;
 }
 
 function addWalletCredits(amount) {
   const next = getWalletCredits() + amount;
-  localStorage.setItem(PLAYER_WALLET_KEY, String(next));
+  writeNumber(PLAYER_WALLET_KEY, next);
   return next;
 }
 
 function getSavedRadioTrackIndex() {
-  const raw = Number(localStorage.getItem(RADIO_TRACK_PREF_KEY));
+  const raw = readNumber(RADIO_TRACK_PREF_KEY, Number.NaN);
   if (Number.isInteger(raw) && raw >= 0 && raw < radioTracks.length) return raw;
   return 0;
 }
 
 function saveRadioTrackIndex(index) {
   const safe = Number.isInteger(index) && index >= 0 && index < radioTracks.length ? index : 0;
-  localStorage.setItem(RADIO_TRACK_PREF_KEY, String(safe));
+  writeNumber(RADIO_TRACK_PREF_KEY, safe);
+}
+
+function migrateLegacyStorageKeys() {
+  try {
+    const legacyWallet = Number(localStorage.getItem("ct_wallet_credits_v1"));
+    if (Number.isFinite(legacyWallet) && legacyWallet >= 0 && !Number.isFinite(readNumber(PLAYER_WALLET_KEY, Number.NaN))) {
+      writeNumber(PLAYER_WALLET_KEY, Math.floor(legacyWallet));
+    }
+
+    const legacyRadio = Number(localStorage.getItem("ct_radio_track_idx_v1"));
+    if (Number.isInteger(legacyRadio) && legacyRadio >= 0 && legacyRadio < radioTracks.length && !Number.isFinite(readNumber(RADIO_TRACK_PREF_KEY, Number.NaN))) {
+      writeNumber(RADIO_TRACK_PREF_KEY, legacyRadio);
+    }
+  } catch {
+    // no-op
+  }
 }
 
 function pushEvent(type, payload = {}) {
@@ -221,6 +265,73 @@ function addFloatingFeedback(text, type = "neutral") {
   feedback.textContent = text;
   feedbackLayer.appendChild(feedback);
   setTimeout(() => feedback.remove(), 820);
+}
+
+function refreshComboMeter() {
+  if (!comboMeter) return;
+  if (state.combo.count <= 0) {
+    comboMeter.classList.add("hidden");
+    comboMeter.textContent = "";
+    return;
+  }
+
+  comboMeter.classList.remove("hidden");
+  comboMeter.textContent = `COMBO x${state.combo.multiplier.toFixed(1)} · ${state.combo.count}`;
+}
+
+function breakCombo(reason = "timeout") {
+  if (state.combo.count <= 0) return;
+  trackEvent("combo_break", { reason, count: state.combo.count, multiplier: state.combo.multiplier });
+  state.combo.count = 0;
+  state.combo.multiplier = 1;
+  state.combo.expiresAt = 0;
+  state.combo.lastSource = null;
+  refreshComboMeter();
+}
+
+function registerComboAction(source, basePoints, feedbackText, feedbackType = "neutral") {
+  const now = performance.now();
+  if (state.combo.expiresAt < now) {
+    state.combo.count = 0;
+    state.combo.multiplier = 1;
+  }
+
+  state.combo.count += 1;
+  state.combo.multiplier = Math.min(4.5, 1 + state.combo.count * 0.12);
+  state.combo.expiresAt = now + COMBO_WINDOW_MS;
+  state.combo.lastSource = source;
+
+  const comboBonus = Math.round(basePoints * Math.max(0, state.combo.multiplier - 1));
+  if (comboBonus > 0) award(comboBonus);
+
+  trackEvent("combo_step", {
+    source,
+    count: state.combo.count,
+    multiplier: Number(state.combo.multiplier.toFixed(2)),
+    comboBonus,
+  });
+
+  addFloatingFeedback(`${feedbackText} · x${state.combo.multiplier.toFixed(1)}`, feedbackType);
+  refreshComboMeter();
+}
+
+function checkNearMiss(enemy) {
+  if (!enemy.alive || enemy.nearMissChecked || state.gameOver) return;
+
+  const progressDelta = enemy.progress - PLAYER_Y;
+  if (progressDelta < 0.02 || progressDelta > 0.24) return;
+
+  enemy.nearMissChecked = true;
+  const playerX = playerHitboxX().center;
+  const enemyX = enemyHitboxX(enemy).center;
+  const lateralDistance = Math.abs(playerX - enemyX);
+
+  if (lateralDistance < NEAR_MISS_X_MIN || lateralDistance > NEAR_MISS_X_MAX) return;
+
+  const nearMissPoints = 220;
+  award(nearMissPoints);
+  trackEvent("near_miss", { lane: enemy.lane, lateralDistance: Number(lateralDistance.toFixed(3)), score: state.score });
+  registerComboAction("near_miss", nearMissPoints, "NEAR MISS +220", "overtake");
 }
 
 function flashScreen(type = "neutral") {
@@ -306,15 +417,15 @@ function placePlayer(animated = true) {
   playerCar.style.left = playerLeftCss();
 }
 
-function createEnemy(prewarm = false) {
+function createEnemy(prewarm = false, forcedLane = null) {
   const laneLoad = lanes.map(() => 0);
   state.enemies.forEach((enemy) => {
     laneLoad[enemy.lane] += 1;
   });
 
   const laneCandidates = lanes.map((_, index) => index).sort((a, b) => laneLoad[a] - laneLoad[b]);
-  let chosenLane = laneCandidates[0];
-  if (!prewarm && Math.random() < 0.7 && chosenLane === state.lane) {
+  let chosenLane = forcedLane ?? laneCandidates[0];
+  if (!prewarm && forcedLane == null && Math.random() < 0.7 && chosenLane === state.lane) {
     chosenLane = laneCandidates.find((lane) => lane !== state.lane) ?? chosenLane;
   }
 
@@ -346,6 +457,7 @@ function createEnemy(prewarm = false) {
     laneShiftClock: 0,
     steeringDir: 0,
     laneX: lanes[chosenLane],
+    nearMissChecked: false,
   };
 
   enemy.style.transform = "rotate(0deg)";
@@ -367,10 +479,12 @@ function doTakedown(model, direction = 1) {
   model.element.style.transform = `translateX(${direction > 0 ? 52 : -52}px) rotate(${direction > 0 ? 210 : -210}deg) scale(0.95)`;
   model.element.style.opacity = "0";
   model.element.style.top = `${(model.progress + 0.18) * 100}%`;
-  award(750);
+  const takedownPoints = 750;
+  award(takedownPoints);
+  trackEvent("takedown", { lane: model.lane, score: state.score });
   state.takedowns += 1;
   pushEvent("takedown", { lane: model.lane, score: state.score });
-  addFloatingFeedback("TAKEDOWN +750", "takedown");
+  registerComboAction("takedown", takedownPoints, "TAKEDOWN +750", "takedown");
   flashScreen("takedown");
   playSfx(takedownSound);
   setTimeout(() => removeEnemy(model), 470);
@@ -381,6 +495,8 @@ function endGame() {
   state.gameOver = true;
   state.running = false;
   state.collisions += 1;
+  breakCombo("collision");
+  trackEvent("collision", { score: state.score, lane: state.lane });
   pushEvent("collision", { lane: state.lane, score: state.score });
   gameOverPanel.classList.remove("hidden");
   overlay.classList.add("hidden");
@@ -492,12 +608,15 @@ function updateEnemy(enemy, dt, now) {
   enemy.progress += (state.speed / 1240 - enemy.speed) * dt;
   enemy.element.style.top = `${enemy.progress * 100}%`;
 
+  checkNearMiss(enemy);
+
   if (!enemy.countedOvertake && enemy.progress > 1.02) {
     enemy.countedOvertake = true;
     state.overtakes += 1;
-    award(180);
+    const overtakePoints = 180;
+    award(overtakePoints);
     pushEvent("overtake", { lane: enemy.lane, score: state.score });
-    addFloatingFeedback("OVERTAKE +180", "overtake");
+    registerComboAction("overtake", overtakePoints, "OVERTAKE +180", "overtake");
   }
 
   if (enemy.progress > 1.18 || enemy.progress < -0.25) {
@@ -640,18 +759,132 @@ function giftSpawnTick(dt) {
   spawnGiftDrop();
 }
 
+function laneBlockedByObstacle(lane, progress = null) {
+  return state.obstacles.some((obs) => {
+    if (!obs.active || obs.lane !== lane) return false;
+    if (progress == null) return true;
+    return Math.abs(obs.progress - progress) < 0.16;
+  });
+}
+
+function spawnObstacle() {
+  if (state.obstacles.length >= MAX_ACTIVE_OBSTACLES) return;
+
+  const laneCandidates = lanes
+    .map((_, i) => i)
+    .filter((lane) => !laneBlockedByObstacle(lane));
+  if (!laneCandidates.length) return;
+
+  let lane = laneCandidates[Math.floor(Math.random() * laneCandidates.length)];
+  if (Math.random() < 0.72 && lane === state.lane) {
+    const safe = laneCandidates.filter((i) => i !== state.lane);
+    if (safe.length) lane = safe[Math.floor(Math.random() * safe.length)];
+  }
+
+  const el = document.createElement("img");
+  el.className = "lane-obstacle";
+  el.alt = "";
+  el.setAttribute("aria-hidden", "true");
+  let assetIndex = 0;
+  const tryNextObstacleAsset = () => {
+    if (assetIndex >= OBSTACLE_ASSET_CANDIDATES.length) {
+      el.classList.add("lane-obstacle-fallback");
+      el.removeAttribute("src");
+      trackEvent("obstacle_asset_missing", {
+        candidates: OBSTACLE_ASSET_CANDIDATES,
+      });
+      return;
+    }
+
+    const nextSrc = OBSTACLE_ASSET_CANDIDATES[assetIndex];
+    assetIndex += 1;
+    el.src = nextSrc;
+  };
+
+  el.addEventListener("error", tryNextObstacleAsset);
+  tryNextObstacleAsset();
+  el.style.left = laneToLeftCss(lanes[lane]);
+  el.style.top = "-18%";
+  carsLayer.appendChild(el);
+
+  state.obstacles.push({
+    element: el,
+    lane,
+    progress: -0.18,
+    active: true,
+  });
+
+  addFloatingFeedback(`⚠ VOIE ${lane + 1} BLOQUÉE`, "neutral");
+  trackEvent("obstacle_spawn", { lane });
+}
+
+function updateObstacles(dt) {
+  state.obstacles = state.obstacles.filter((obs) => {
+    if (!obs.active) return false;
+
+    obs.progress += (state.speed / 1240) * dt;
+    obs.element.style.top = `${obs.progress * 100}%`;
+
+    const playerRect = playerCar.getBoundingClientRect();
+    const obstacleRect = obs.element.getBoundingClientRect();
+    const overlap = overlapFromRects(playerRect, obstacleRect);
+
+    if (overlap.intersects) {
+      trackEvent("obstacle_hit", { lane: obs.lane, score: state.score });
+      endGame();
+      obs.element.remove();
+      return false;
+    }
+
+    if (obs.progress > 1.2) {
+      obs.element.remove();
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function pickSpawnLaneV2() {
+  const laneScores = lanes.map((_, lane) => {
+    let score = 0;
+
+    if (laneBlockedByObstacle(lane, -0.05)) score += 1000;
+
+    state.enemies.forEach((enemy) => {
+      if (!enemy.alive) return;
+      const laneDistance = Math.abs(Math.round(enemy.lanePosition) - lane);
+      if (laneDistance === 0) score += Math.max(0, 0.25 - Math.abs(enemy.progress + 0.02)) * 18;
+      if (laneDistance === 1) score += Math.max(0, 0.2 - Math.abs(enemy.progress - 0.1)) * 6;
+    });
+
+    if (lane === state.lane) score += 2.5;
+
+    return { lane, score };
+  });
+
+  laneScores.sort((a, b) => a.score - b.score);
+  return laneScores[0]?.lane ?? Math.floor(Math.random() * lanes.length);
+}
+
 function spawnTick() {
   state.enemySpawnClock += performance.now() - state.lastFrame;
   const level = difficultyLevel();
   const spawnInterval = Math.max(520, ENEMY_SPAWN_INTERVAL_MS - level * 90);
   const maxEnemies = Math.min(9, MAX_ENEMIES + Math.floor(level / 2));
+
+  state.obstacleSpawnClock += performance.now() - state.lastFrame;
+  if (state.obstacleSpawnClock >= OBSTACLE_SPAWN_INTERVAL_MS) {
+    state.obstacleSpawnClock = 0;
+    spawnObstacle();
+  }
   if (state.enemySpawnClock < spawnInterval || state.enemies.length >= maxEnemies) return;
   state.enemySpawnClock = 0;
 
   const blockedNearPlayerLane = state.enemies.some((enemy) => enemy.alive && Math.round(enemy.lanePosition) === state.lane && enemy.progress > 0.62 && enemy.progress < 0.95);
   if (blockedNearPlayerLane) {
     // Try spawning but avoid player's lane in unfair window.
-    createEnemy(false);
+    createEnemy(false, pickSpawnLaneV2());
     const last = state.enemies[state.enemies.length - 1];
     if (last.lane === state.lane) {
       last.lane = (last.lane + 1 + Math.floor(Math.random() * 2)) % lanes.length;
@@ -662,7 +895,7 @@ function spawnTick() {
     return;
   }
 
-  createEnemy(false);
+  createEnemy(false, pickSpawnLaneV2());
   rebalanceUnfairBlock();
 }
 
@@ -721,9 +954,11 @@ function mainLoop(now) {
     updateDifficultyUiHint();
 
     const nowTime = performance.now();
+    if (state.combo.expiresAt && nowTime > state.combo.expiresAt) breakCombo("timeout");
     regulateBotTraffic(dt);
     [...state.enemies].forEach((enemy) => updateEnemy(enemy, dt, nowTime));
     updateGiftDrops(dt);
+    updateObstacles(dt);
   }
 
   scoreValue.textContent = String(state.score).padStart(10, "0");
@@ -749,8 +984,8 @@ function ensureRadioPlayback() {
 
 function pauseAllRuntimeAudio() {
   radioPlayer?.pause();
-  crashSound?.pause();
-  takedownSound?.pause();
+  stopAndReset(crashSound);
+  stopAndReset(takedownSound);
 }
 
 function onAppBackground() {
@@ -866,7 +1101,7 @@ function bindControls() {
   window.addEventListener("keyup", onKey(false));
 
 
-  setupTutorialOverlay();
+  if (isFeatureEnabled("tutorialEnabled")) setupTutorialOverlay();
   setupTapSwipeControls();
 
   pauseBtn.addEventListener("click", () => togglePause());
@@ -927,10 +1162,13 @@ function bindControls() {
 }
 
 function init() {
+  ensureStorageVersion(2);
+  migrateLegacyStorageKeys();
   playerCar.src = selectedVehicleSrc();
   if (radioSelect) radioSelect.value = String(getSavedRadioTrackIndex());
   state.playerLanePosition = state.lane;
   placePlayer(false);
+  if (!isFeatureEnabled("tutorialEnabled")) state.tutorialSeen = true;
   bindControls();
   ensureRadioPlayback();
 
@@ -939,6 +1177,7 @@ function init() {
   }
 
   state.lastFrame = performance.now();
+  trackEvent("play_session_start", { vehicle: localStorage.getItem("selectedVehicle") || "PORSHE" });
   requestAnimationFrame(mainLoop);
 }
 

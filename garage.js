@@ -1,4 +1,5 @@
 import { initPagePerf, markNavigationStart, reportNavigationArrival, runExitTransition } from "./perf-tools.js";
+import { navigateWithPreload as sharedNavigateWithPreload, preloadAsset } from "./src/core/navigation.js";
 const vehicles = [
   {
     id: "PORSHE",
@@ -202,39 +203,16 @@ function setupAssetFallbacks() {
 }
 
 
-function preloadAsset(src) {
-  return new Promise((resolve) => {
-    if (src.endsWith(".mp3") || src.endsWith(".mp4")) {
-      const media = document.createElement("audio");
-      media.preload = "auto";
-      media.src = src;
-      const done = () => resolve();
-      media.addEventListener("loadeddata", done, { once: true });
-      media.addEventListener("error", done, { once: true });
-      return;
-    }
-
-    const img = new Image();
-    img.onload = () => resolve();
-    img.onerror = () => resolve();
-    img.src = src;
-  });
-}
-
 async function navigateWithPreload(targetHref, assets) {
-  let loadingShown = false;
-  const loadingTimer = window.setTimeout(() => {
-    navLoading?.classList.remove("hidden");
-    loadingShown = true;
-  }, 220);
-
-  await runExitTransition({ appRoot: document.querySelector(".garage-app"), navLoading: null });
-  markNavigationStart(PAGE_NAME, targetHref);
-  await Promise.all(assets.map((src) => preloadAsset(src)));
-
-  window.clearTimeout(loadingTimer);
-  if (!loadingShown) navLoading?.classList.add("hidden");
-  window.location.href = targetHref;
+  return sharedNavigateWithPreload({
+    targetHref,
+    assets,
+    appRoot: document.querySelector(".garage-app"),
+    navLoading,
+    runExitTransition,
+    markNavigationStart,
+    pageName: PAGE_NAME,
+  });
 }
 
 function cycleVehicle(direction) {
@@ -285,6 +263,10 @@ document.getElementById("startRaceBtn").addEventListener("click", async () => {
   navigateWithPreload("play.html", [
     qualityImage,
     "./Assets/Road/Road_street_baseloop_v01.png",
+    "/Assets/Road/obstacles/Obstacles_decor_base_v01.png",
+    "/Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
+    "./Assets/Road/obstacles/Obstacles_decor_base_v01.png",
+    "./Assets/Road/Obstacles/Obstacles_decor_base_v01.png",
     "./Assets/Sounds/Onroad/radio/Sound_music_onroad_playsong1_sample_v01.mp3",
   ]);
 });
