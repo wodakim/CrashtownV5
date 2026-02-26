@@ -141,7 +141,7 @@ body {
   position: absolute;
   top: calc(5.2% + var(--safe-top));
   right: 8.6%;
-  z-index: 6;
+  z-index: 25;
   display: flex;
   gap: 8px;
 }
@@ -563,21 +563,6 @@ body {
   display: block;
 }
 
-.daily-quest-label {
-  position: absolute;
-  top: 8%;
-  left: 12%;
-  right: 12%;
-  text-align: center;
-  color: #fff;
-  letter-spacing: 1px;
-  font-size: clamp(0.56rem, 2.1vw, 0.72rem);
-  text-shadow: 1px 1px 0 #000;
-  background: rgba(245, 158, 20, 0.85);
-  border-radius: 7px;
-  padding: 2px 6px;
-}
-
 .daily-quest-icon {
   position: absolute;
   width: 30%;
@@ -611,6 +596,13 @@ body {
   background: transparent;
 }
 
+.wallet-popup .close-btn {
+  left: auto;
+  right: 25px;
+  top: 5px;
+  z-index: 5;
+}
+
 .wallet-popup .wallet-popup-bg {
   position: absolute;
   inset: 0;
@@ -621,59 +613,84 @@ body {
 }
 
 .wallet-popup h2 {
-  margin: 4px 0 12px;
+  margin: -8px 0 0px;
   text-align: center;
   color: #fff;
-  letter-spacing: 1px;
-  font-size: 2rem;
-  text-shadow: 2px 2px 0 #000;
+  letter-spacing: 2px;
+  font-size: 1.8rem;
+  font-weight: normal;
+  -webkit-text-stroke: 4px #000;
+  paint-order: stroke fill;
+  text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
 }
 
 .wallet-currency {
   position: relative;
-  margin: 14px 0;
-  min-height: 72px;
+  margin: 24px 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
 }
 
 .wallet-currency-bg {
-  width: 100%;
-  display: block;
+  position: absolute;
+  left: 35px;
+  right: 50px;
+  width: auto; 
+  height: 100%;
+  z-index: 1;
 }
 
 .wallet-currency-icon {
   position: absolute;
-  left: 10px;
+  left: -20px;
   top: 50%;
   transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
+  width: 80px;
+  height: auto;
+  z-index: 3;
+  filter: drop-shadow(4px 4px 4px rgba(0, 0, 0, 0.5));
 }
 
 .wallet-currency-value {
   position: absolute;
-  left: 68px;
-  right: 56px;
+  right: 30%;
   top: 50%;
   transform: translateY(-50%);
   color: #fff;
-  text-shadow: 2px 2px 0 #000;
-  font-size: 1.22rem;
+  font-size: 2rem;
+  font-weight: normal;
+  letter-spacing: 1px;
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 #000;
+  z-index: 3;
+  margin: 0;
+  text-align: right;
 }
 
 .wallet-add-btn {
   position: absolute;
-  right: 9px;
+  right: 15px;
   top: 50%;
   transform: translateY(-50%);
   border: 0;
   background: transparent;
   padding: 0;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
+  z-index: 3;
+  cursor: pointer;
+  transition: transform 100ms ease;
+}
+
+.wallet-add-btn:active {
+  transform: translateY(-50%) scale(0.9);
 }
 
 .wallet-add-btn img {
   width: 100%;
+  height: 100%;
 }
 
 .quest-list {
