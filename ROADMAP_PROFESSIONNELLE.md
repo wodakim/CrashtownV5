@@ -277,6 +277,7 @@ Une feature est considérée "done" seulement si:
 - **Phase active:** Phase 2 — Gameplay features pack #1
 - **Sprint actif:** Sprint 4
 - **Règle d'ordre:** Sprint 3 terminé; exécution en cours strictement sur Sprint 4.
+- **Blocants actuels Sprint 4:** validation physique approfondie + présence asset obstacle SVG vérifiée dans le repo/bundle.
 
 ### Sprint 1 — Checklist de validation
 - [x] Scope V1 MUST/SHOULD/COULD figé (doc dédié Sprint 1).
@@ -322,3 +323,6 @@ Une feature est considérée "done" seulement si:
 - À chaque message, vérifier le bloc `Suivi d'exécution (strict, ordre roadmap)` avant de proposer la prochaine action.
 - Exécuter strictement l'ordre des sprints (pas de saut de Sprint).
 - Signaler explicitement ce qui est **fait**, **en cours**, et **MANUEL (toi)**.
+
+- **Ajout intéressant (S4.5):** checkpoint explicite des blocants de clôture Sprint 4 dans le suivi global.
+- **Motif:** éviter les faux positifs de fin de sprint tant que les prérequis MANUEL/asset ne sont pas objectivement validés.

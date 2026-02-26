@@ -23,8 +23,9 @@
 - [x] Intégration gameplay dans boucle principale (`updateObstacles`, spawn clock dédiée).
 - [x] Tracking télémétrie obstacle (`obstacle_spawn`, `obstacle_hit`).
 - [x] Bots détruits en collision obstacle (`obstacle_bot_hit`) pour cohérence gameplay.
+- [x] Validation locale web/desktop effectuée (rendu obstacle + collisions joueur/bots).
 - [ ] Validation gameplay manuelle approfondie (fairness/ressenti) sur appareils réels.
-- [ ] Asset obstacle présent dans le bundle Android (`public/Assets/Road/obstacles/Obstacles_decor_base_v01.svg`).
+- [ ] Asset obstacle présent dans le bundle Android (`public/Assets/Road/obstacles/Obstacles_decor_base_v01.svg`) — en attente de détection dans ce repo.
 
 ---
 
