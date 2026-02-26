@@ -275,9 +275,9 @@ Une feature est considérée "done" seulement si:
 
 ### État global
 - **Phase active:** Phase 2 — Gameplay features pack #1
-- **Sprint actif:** Sprint 6
-- **Règle d'ordre:** Sprint 5 clôturé; exécution en cours strictement sur Sprint 6.
-- **Blocants actuels Sprint 6:** aucun blocant P0 identifié au démarrage (scope missions daily/weekly).
+- **Sprint actif:** Sprint 5.5 (intermédiaire UI Main Menu)
+- **Règle d'ordre:** Sprint 5 clôturé; exécution en cours strictement sur Sprint 5.5 puis Sprint 6.
+- **Blocants actuels Sprint 5.5:** validation physique obligatoire du nouveau layout main menu + wallet + popup quêtes.
 
 ### Sprint 1 — Checklist de validation
 - [x] Scope V1 MUST/SHOULD/COULD figé (doc dédié Sprint 1).
@@ -310,6 +310,13 @@ Une feature est considérée "done" seulement si:
 - [x] Intégration runtime run events dans `play.js` (activation/fin + telemetry).
 - [x] Effets gameplay appliqués: densité trafic (spawn) et nuit (vitesse/croisière).
 - [x] Validation gameplay manuelle approfondie Sprint 5 (fairness/ressenti).
+
+### Sprint 5.5 — Checklist (intermédiaire UI Main Menu)
+- [x] Layout principal réorganisé en blocs/boutons redimensionnables (écrans variés).
+- [x] Wallet fermé affiché dans le menu principal (box dédiée).
+- [x] Popup wallet structuré (currency current/emerald + boutons add + close).
+- [x] Popup quêtes journalières ajouté (récompenses crédits + bonus +5 emerald en complétion).
+- [ ] Validation physique propriétaire Sprint 5.5.
 
 ### Sprint 6 — Checklist de démarrage
 - [ ] Spécification du système missions daily/weekly (types, objectifs, récompenses).
@@ -363,3 +370,6 @@ Une feature est considérée "done" seulement si:
 
 - **Ajout intéressant (S5.6):** clôture Sprint 5 validée après test physique propriétaire; passage contrôlé au Sprint 6.
 - **Motif:** maintenir la discipline d'ordre roadmap et éviter de prolonger un sprint déjà validé.
+
+- **Ajout intéressant (S5.7):** sprint intermédiaire 5.5 dédié uniquement au layout UI principal + wallet/quêtes.
+- **Motif:** sécuriser l'ergonomie cross-screen avant d'enchaîner la feature missions Sprint 6.

@@ -6,6 +6,8 @@ const popups = {
   profilePopup: document.getElementById("profilePopup"),
   shopPopup: document.getElementById("shopPopup"),
   constructionPopup: document.getElementById("constructionPopup"),
+  walletPopup: document.getElementById("walletPopup"),
+  dailyQuestPopup: document.getElementById("dailyQuestPopup"),
 };
 
 const bootScreen = document.getElementById("bootScreen");
@@ -60,6 +62,13 @@ const preloadAssets = [
   "/Assets/Vehicles/Player/HD/Vehicles_camaro_pixel_base_v01.png",
   "/Assets/Sounds/Mainmenu/Song_mainmenu_base_v01.mp3",
   "/Assets/Sounds/Garage/Music/Sound_music_garage_playsong1_sample_v01.mp3",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_wallet_box_base_v01.svg",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_wallet_closed_box_base_v01.svg",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_currentmonney_base_v01.svg",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_emerald_base_v01.svg",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_monney_currentmonney_base_v01.svg",
+  "/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_monney_emerald_base_v01.svg",
+  "/Assets/UI/Buttons/ui_btn_add_base_v01.svg",
   INTRO_VIDEO_SRC,
 ];
 
@@ -71,11 +80,15 @@ const profileNicknameInput = document.getElementById("profileNickname");
 const profileLevel = document.getElementById("profileLevel");
 const profileRank = document.getElementById("profileRank");
 const walletAmount = document.getElementById("walletAmount");
+const walletClosedAmount = document.getElementById("walletClosedAmount");
+const walletCreditsValue = document.getElementById("walletCreditsValue");
+const walletEmeraldValue = document.getElementById("walletEmeraldValue");
 const menuMessageBox = document.getElementById("menuMessageBox");
 
 const PLAYER_PROFILE_KEY = "ct_player_profile_v1";
 const PLAYER_WALLET_KEY = "ct_wallet_credits_v1";
 const DAILY_REWARD_KEY = "ct_daily_reward_last_claim_v1";
+const PLAYER_EMERALD_KEY = "ct_wallet_emerald_v1";
 const MENU_BROADCAST_TEXT = "V0.03, mise à jour du menu principal, avec un petit décor animé en background et une nouvelle voiture jouable (merci à vous mes bro <3) ! Prochainement: boutique, classement, et plus encore...";
 
 const PAGE_NAME = "index.html";
@@ -110,6 +123,13 @@ function getWalletCredits() {
   return 2500;
 }
 
+function getWalletEmeralds() {
+  const raw = Number(localStorage.getItem(PLAYER_EMERALD_KEY));
+  if (Number.isFinite(raw) && raw >= 0) return Math.floor(raw);
+  localStorage.setItem(PLAYER_EMERALD_KEY, "25");
+  return 25;
+}
+
 function renderProfile() {
   const profile = getPlayerProfile();
   if (profileNicknameInput) profileNicknameInput.value = profile.nickname;
@@ -125,8 +145,12 @@ function renderMenuBroadcast() {
 }
 
 function renderWallet() {
-  if (!walletAmount) return;
-  walletAmount.textContent = `Crédits: ${getWalletCredits()}`;
+  const credits = getWalletCredits();
+  const emeralds = getWalletEmeralds();
+  if (walletAmount) walletAmount.textContent = `Crédits: ${credits}`;
+  if (walletClosedAmount) walletClosedAmount.textContent = `${credits.toLocaleString("fr-FR")}`;
+  if (walletCreditsValue) walletCreditsValue.textContent = `${credits.toLocaleString("fr-FR")}`;
+  if (walletEmeraldValue) walletEmeraldValue.textContent = `${emeralds.toLocaleString("fr-FR")}`;
 }
 
 function saveProfileFromForm() {
@@ -612,6 +636,10 @@ document.getElementById("shopBtn").addEventListener("click", () => {
   renderWallet();
   openPopup("shopPopup");
 });
+document.getElementById("walletBtn")?.addEventListener("click", () => {
+  renderWallet();
+  openPopup("walletPopup");
+});
 
 document.querySelectorAll("[data-close-popup]").forEach((closeBtn) => {
   closeBtn.addEventListener("click", (event) => closePopup(event.currentTarget.dataset.closePopup));
@@ -621,7 +649,7 @@ overlay.addEventListener("click", () => {
   Object.keys(popups).forEach(closePopup);
 });
 
-document.getElementById("dailyGiftBtn").addEventListener("click", claimDailyReward);
+document.getElementById("dailyQuestBtn")?.addEventListener("click", () => openPopup("dailyQuestPopup"));
 
 document.getElementById("playBtn").addEventListener("click", () => {
   navigateWithPreload("garage.html", [
@@ -680,3 +708,8 @@ window.addEventListener("pagehide", () => {
 
 document.addEventListener("visibilitychange", handleAppVisibility);
 window.addEventListener("blur", handleAppVisibility);
+
+
+document.querySelectorAll("[data-wallet-action]").forEach((btn) => {
+  btn.addEventListener("click", () => openConstruction("Module économie"));
+});

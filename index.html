@@ -52,21 +52,17 @@
           />
         </section>
 
-        <section class="daily-reward">
-          <img
-            class="daily-popup"
-            src="/Assets/UI/Pop-up/ui_popup_daily_reward_base_v01.svg"
-            alt="Daily reward"
-            data-asset-name="ui_popup_daily_reward_base_v01.svg"
-          />
-          <button id="dailyGiftBtn" class="gift-btn" aria-label="Récupérer la récompense du jour">
-            <img
-              src="/Assets/UI/Icons/ui_icon_gift_v01.svg"
-              alt="Icône cadeau"
-              data-asset-name="ui_icon_gift_v01.svg"
-            />
-          </button>
-        </section>
+        <button id="dailyQuestBtn" class="daily-quest-card" aria-label="Ouvrir quêtes journalières">
+          <img class="daily-popup" src="/Assets/UI/Pop-up/ui_popup_daily_reward_base_v01.svg" alt="Quêtes journalières" data-asset-name="ui_popup_daily_reward_base_v01.svg" />
+          <span class="daily-quest-label">DAILY MISSIONS</span>
+          <img class="daily-quest-icon" src="/Assets/UI/Icons/ui_icon_gift_v01.svg" alt="Quêtes" data-asset-name="ui_icon_gift_v01.svg" />
+        </button>
+
+        <button id="walletBtn" class="wallet-closed-card" aria-label="Ouvrir wallet">
+          <img class="wallet-closed-bg" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_wallet_closed_box_base_v01.svg" alt="Wallet" data-asset-name="ui_popup_wallet_closed_box_base_v01.svg" />
+          <span class="wallet-closed-title">WALLET</span>
+          <span id="walletClosedAmount" class="wallet-closed-amount">9,999+</span>
+        </button>
 
         <button class="shop-btn" id="shopBtn" aria-label="Ouvrir boutique">
           <img
@@ -133,6 +129,44 @@
         <p id="profileLevel">Niveau: 1</p>
         <p id="profileRank">Classement: Rookie</p>
         <button id="saveProfileBtn" class="action-btn" type="button">Sauvegarder profil</button>
+      </section>
+
+
+      <section class="popup hidden wallet-popup" id="walletPopup" aria-label="Wallet">
+        <button class="close-btn" data-close-popup="walletPopup" aria-label="Fermer wallet">
+          <img src="/Assets/UI/Buttons/ui_btn_close_base_v01.svg" alt="Fermer" data-asset-name="ui_btn_close_base_v01.svg" />
+        </button>
+        <img class="wallet-popup-bg" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_wallet_box_base_v01.svg" alt="Wallet" data-asset-name="ui_popup_wallet_box_base_v01.svg" />
+        <h2>WALLET</h2>
+        <div class="wallet-currency wallet-currency-credits">
+          <img class="wallet-currency-bg" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_currentmonney_base_v01.svg" alt="Currency credits" data-asset-name="ui_popup_economy_module_currentmonney_base_v01.svg" />
+          <img class="wallet-currency-icon" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_monney_currentmonney_base_v01.svg" alt="Crédits" data-asset-name="ui_popup_economy_module_monney_currentmonney_base_v01.svg" />
+          <span id="walletCreditsValue" class="wallet-currency-value">9,999+</span>
+          <button class="wallet-add-btn" aria-label="Ajouter des crédits" data-wallet-action="credits">
+            <img src="/Assets/UI/Buttons/ui_btn_add_base_v01.svg" alt="Ajouter" data-asset-name="ui_btn_add_base_v01.svg" />
+          </button>
+        </div>
+        <div class="wallet-currency wallet-currency-emerald">
+          <img class="wallet-currency-bg" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_emerald_base_v01.svg" alt="Currency emerald" data-asset-name="ui_popup_economy_module_emerald_base_v01.svg" />
+          <img class="wallet-currency-icon" src="/Assets/UI/Pop-up/Pop-up_wallet/ui_popup_economy_module_monney_emerald_base_v01.svg" alt="Emerald" data-asset-name="ui_popup_economy_module_monney_emerald_base_v01.svg" />
+          <span id="walletEmeraldValue" class="wallet-currency-value">9,999+</span>
+          <button class="wallet-add-btn" aria-label="Ajouter des emeralds" data-wallet-action="emerald">
+            <img src="/Assets/UI/Buttons/ui_btn_add_base_v01.svg" alt="Ajouter" data-asset-name="ui_btn_add_base_v01.svg" />
+          </button>
+        </div>
+      </section>
+
+      <section class="popup hidden" id="dailyQuestPopup" aria-label="Quêtes journalières">
+        <button class="close-btn" data-close-popup="dailyQuestPopup" aria-label="Fermer quêtes journalières">
+          <img src="/Assets/UI/Buttons/ui_btn_close_base_v01.svg" alt="Fermer" data-asset-name="ui_btn_close_base_v01.svg" />
+        </button>
+        <h2>QUÊTES JOURNALIÈRES</h2>
+        <div class="quest-list">
+          <div class="quest-row"><span>Terminer 1 run</span><span>+300 crédits</span></div>
+          <div class="quest-row"><span>Faire 3 near-miss</span><span>+500 crédits</span></div>
+          <div class="quest-row"><span>Réaliser 1 takedown</span><span>+700 crédits</span></div>
+          <div class="quest-row quest-row-final"><span>Complétion totale</span><span>+5 emerald</span></div>
+        </div>
       </section>
 
       <section class="popup hidden" id="shopPopup" aria-label="Boutique voitures">
