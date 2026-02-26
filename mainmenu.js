@@ -48,7 +48,7 @@ const cars = {
 const INTRO_VIDEO_SRC = "/Assets/Video/Intro.mp4";
 const INTRO_SEEN_SESSION_KEY = "ct_intro_seen_session_v1";
 const preloadAssets = [
-  "/Assets/Road/Background_mainmenu_nature_base_v01.png",
+  "/Assets/Road/Background_mainmenu_nature_base_v01.svg",
   "/Assets/UI/Decor/tree_complete.svg",
   "/Assets/Branding/Logo/Brand_crashtown_logo_main_v02.svg",
   "/Assets/UI/Screens/MainMenu/ui_garage_menu_bg_v01.svg",
