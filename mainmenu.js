@@ -80,9 +80,9 @@ const profileNicknameInput = document.getElementById("profileNickname");
 const profileLevel = document.getElementById("profileLevel");
 const profileRank = document.getElementById("profileRank");
 const walletAmount = document.getElementById("walletAmount");
-const walletClosedAmount = document.getElementById("walletClosedAmount");
 const walletCreditsValue = document.getElementById("walletCreditsValue");
 const walletEmeraldValue = document.getElementById("walletEmeraldValue");
+const dailyQuestIcon = document.getElementById("dailyQuestIcon");
 const menuMessageBox = document.getElementById("menuMessageBox");
 
 const PLAYER_PROFILE_KEY = "ct_player_profile_v1";
@@ -148,7 +148,6 @@ function renderWallet() {
   const credits = getWalletCredits();
   const emeralds = getWalletEmeralds();
   if (walletAmount) walletAmount.textContent = `Crédits: ${credits}`;
-  if (walletClosedAmount) walletClosedAmount.textContent = `${credits.toLocaleString("fr-FR")}`;
   if (walletCreditsValue) walletCreditsValue.textContent = `${credits.toLocaleString("fr-FR")}`;
   if (walletEmeraldValue) walletEmeraldValue.textContent = `${emeralds.toLocaleString("fr-FR")}`;
 }
@@ -165,22 +164,25 @@ function saveProfileFromForm() {
   showFxNotice("Profil sauvegardé");
 }
 
-function claimDailyReward() {
+function claimDailyRewardIfAvailable() {
   const now = Date.now();
   const last = Number(localStorage.getItem(DAILY_REWARD_KEY) || 0);
   const oneDay = 24 * 60 * 60 * 1000;
-  if (now - last < oneDay) {
-    const remainingH = Math.ceil((oneDay - (now - last)) / (60 * 60 * 1000));
-    showFxNotice(`Daily déjà pris · ${remainingH}h restantes`);
-    return;
-  }
+  if (now - last < oneDay) return false;
 
-  const gain = 300;
+  const gain = 50;
   const credits = getWalletCredits() + gain;
   localStorage.setItem(PLAYER_WALLET_KEY, String(credits));
   localStorage.setItem(DAILY_REWARD_KEY, String(now));
   renderWallet();
+  if (dailyQuestIcon) {
+    dailyQuestIcon.classList.remove("claimed-burst");
+    void dailyQuestIcon.offsetWidth;
+    dailyQuestIcon.classList.add("claimed-burst");
+    window.setTimeout(() => dailyQuestIcon.classList.remove("claimed-burst"), 450);
+  }
   showFxNotice(`Daily +${gain} crédits`);
+  return true;
 }
 
 function showFxNotice(text) {
@@ -649,7 +651,10 @@ overlay.addEventListener("click", () => {
   Object.keys(popups).forEach(closePopup);
 });
 
-document.getElementById("dailyQuestBtn")?.addEventListener("click", () => openPopup("dailyQuestPopup"));
+document.getElementById("dailyQuestBtn")?.addEventListener("click", () => {
+  claimDailyRewardIfAvailable();
+  openPopup("dailyQuestPopup");
+});
 
 document.getElementById("playBtn").addEventListener("click", () => {
   navigateWithPreload("garage.html", [
@@ -711,5 +716,20 @@ window.addEventListener("blur", handleAppVisibility);
 
 
 document.querySelectorAll("[data-wallet-action]").forEach((btn) => {
-  btn.addEventListener("click", () => openConstruction("Module économie"));
+  btn.addEventListener("click", () => {
+    const action = btn.getAttribute("data-wallet-action");
+    if (action === "credits") {
+      const emeralds = getWalletEmeralds();
+      if (emeralds < 5) {
+        showFxNotice("Pas assez d'emeralds (5 requis)");
+        return;
+      }
+      localStorage.setItem(PLAYER_EMERALD_KEY, String(emeralds - 5));
+      localStorage.setItem(PLAYER_WALLET_KEY, String(getWalletCredits() + 500));
+      renderWallet();
+      showFxNotice("+500 crédits pour 5 emeralds");
+      return;
+    }
+    openConstruction("Module économie");
+  });
 });

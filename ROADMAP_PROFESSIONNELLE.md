@@ -373,3 +373,8 @@ Une feature est considérée "done" seulement si:
 
 - **Ajout intéressant (S5.7):** sprint intermédiaire 5.5 dédié uniquement au layout UI principal + wallet/quêtes.
 - **Motif:** sécuriser l'ergonomie cross-screen avant d'enchaîner la feature missions Sprint 6.
+
+- **Ajout intéressant (S5.8):** règle daily mission récompense rapide (+50 crédits/24h) couplée à l'ouverture du popup quêtes.
+- **Motif:** rendre l'interaction menu utile immédiatement sans surcharger le flow principal.
+- **Ajout intéressant (S5.9):** conversion wallet 5 emeralds -> 500 crédits branchée côté menu.
+- **Motif:** poser le premier sink/source économique concret avant Sprint 6 missions complètes.
