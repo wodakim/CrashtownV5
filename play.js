@@ -490,6 +490,17 @@ function doTakedown(model, direction = 1) {
   setTimeout(() => removeEnemy(model), 470);
 }
 
+function crashBotOnObstacle(model, obstacleLane) {
+  if (!model.alive) return;
+  model.alive = false;
+  model.element.style.transition = "transform 360ms ease-out, opacity 360ms ease-out";
+  const direction = model.steeringDir || (Math.random() > 0.5 ? 1 : -1);
+  model.element.style.transform = `translateX(${direction > 0 ? 26 : -26}px) rotate(${direction > 0 ? 132 : -132}deg) scale(0.92)`;
+  model.element.style.opacity = "0";
+  trackEvent("obstacle_bot_hit", { lane: obstacleLane, score: state.score });
+  setTimeout(() => removeEnemy(model), 370);
+}
+
 function endGame() {
   if (state.gameOver) return;
   state.gameOver = true;
@@ -827,6 +838,14 @@ function updateObstacles(dt) {
 
     const playerRect = playerCar.getBoundingClientRect();
     const obstacleRect = obs.element.getBoundingClientRect();
+
+    state.enemies.forEach((enemy) => {
+      if (!enemy.alive) return;
+      const enemyRect = enemy.element.getBoundingClientRect();
+      if (!overlapFromRects(enemyRect, obstacleRect).intersects) return;
+      crashBotOnObstacle(enemy, obs.lane);
+    });
+
     const overlap = overlapFromRects(playerRect, obstacleRect);
 
     if (overlap.intersects) {
